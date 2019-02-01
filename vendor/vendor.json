@@ -25,6 +25,18 @@
 			"revisionTime": "2018-10-24T16:34:19Z"
 		},
 		{
+			"checksumSHA1": "xxLSo5tKtXc7jGrR70yoEfza8Cw=",
+			"path": "github.com/lib/pq",
+			"revision": "9eb73efc1fcc404148b56765b0d3f61d9a5ef8ee",
+			"revisionTime": "2018-10-16T16:26:27Z"
+		},
+		{
+			"checksumSHA1": "AU3fA8Sm33Vj9PBoRPSeYfxLRuE=",
+			"path": "github.com/lib/pq/oid",
+			"revision": "9eb73efc1fcc404148b56765b0d3f61d9a5ef8ee",
+			"revisionTime": "2018-10-16T16:26:27Z"
+		},
+		{
 			"checksumSHA1": "Np8NAPbQmtOJCzO/y6CpHtcZiiw=",
 			"path": "github.com/s1s1ty/go-mysql-crud/driver",
 			"revision": "0d81d1289c4343d51d9d58beacb43b3f1cc83d05",
@@ -37,5 +49,5 @@
 			"revisionTime": "2018-12-17T20:59:03Z"
 		}
 	],
-	"rootPath": "ampli_chat"
+	"rootPath": "fchat"
 }
