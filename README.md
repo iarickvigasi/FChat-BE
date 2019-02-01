@@ -10,7 +10,7 @@ To run with Docker just cd into directory and run
 ## Routes 
 To send message make a POST request to 
 ```
-http://{server_address}/{room_name}/send
+http://{server_address}/send/{room_name}/
 ```
 `room_name` can be anything
 
@@ -20,7 +20,7 @@ in your post request include
 
 To get messages make a POST or GET request to 
 ```
-http://{server_address}/{room_name}/get
+http://{server_address}/get/{room_name}/
 ```
 `room_name` can be anything
 
@@ -30,7 +30,7 @@ in your post request include
 ## Built With
 
 * Golang net/http
-* MySQL
+* Postgres
 * That's all no fancy frameworks required here
 
 ## Authors
