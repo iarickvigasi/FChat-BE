@@ -10,7 +10,7 @@ To run with Docker just cd into directory and run
 ## Routes 
 To send message make a POST request to 
 ```
-http://{server_address}/send/{room_name}/
+https://fchatiavi.herokuapp.com/send/{room_name}/
 ```
 `room_name` can be anything
 
@@ -20,7 +20,7 @@ in your post request include
 
 To get messages make a POST or GET request to 
 ```
-http://{server_address}/get/{room_name}/
+https://fchatiavi.herokuapp.com/get/{room_name}/
 ```
 `room_name` can be anything
 
