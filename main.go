@@ -147,7 +147,7 @@ func sendHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, room strin
 		return
 	}
 
-	_, err = db.Exec(fmt.Sprintf("INSERT INTO %s (name, message) VALUES (\"%s\", \"%s\")", room, t.Name, t.Message))
+	_, err = db.Exec(fmt.Sprintf("INSERT INTO %s VALUES ('%s', '%s');", room, t.Name, t.Message))
 	checkHTTPError(w, err)
 	if err != nil {
 		return
@@ -175,7 +175,7 @@ func getHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, room string
 
 	var messages []Message
 	db.Select(&messages,
-		fmt.Sprintf("SELECT * FROM %s LIMIT %d,%d", room, body.Offset, body.Limit))
+		fmt.Sprintf("SELECT * FROM %s LIMIT %d OFFSET %d", room, body.Limit, body.Offset))
 
 	js, err := json.Marshal(messages)
 	checkHTTPError(w, err)
@@ -242,31 +242,12 @@ func parseURL(w http.ResponseWriter, url string) (action string, room string) {
 }
 
 func checkAndCreateRoom(db *sqlx.DB, room string, w http.ResponseWriter) (err error) {
-	// Check if such table with messages exists
-	// If not create
-	var check = fmt.Sprintf(`
-		SELECT Count(*) as count
-		FROM information_schema.TABLES
-		WHERE TABLE_SCHEMA = "chat" AND TABLE_NAME = '%s';
-	`, room)
+	_, err = db.Exec(fmt.Sprintf(`
+		CREATE TABLE IF NOT EXISTS %s (
+			name VARCHAR (50),
+			message TEXT
+		);
+	`, room))
 
-	rows, err := db.Query(check)
-	count, errDb := checkCount(rows)
-
-	if errDb != nil {
-		checkHTTPError(w, err)
-	}
-
-	if err != nil || count == 0 {
-		_, err := db.Exec(fmt.Sprintf(`
-			CREATE TABLE %s (
-				name varchar(50),
-				message varchar(249)
-			)
-			CHARACTER SET utf8;
-		`, room))
-
-		return err
-	}
-	return nil
+	return err
 }
