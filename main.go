@@ -1,16 +1,21 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 type Message struct {
@@ -23,15 +28,77 @@ type GetRequest struct {
 	Limit  int
 }
 
+var (
+	repeat int
+	db     *sql.DB
+)
+
+func repeatFunc(db *sqlx.DB) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var buffer bytes.Buffer
+		for i := 0; i < repeat; i++ {
+			buffer.WriteString("Hello from Go!")
+		}
+		w.Write([]byte(buffer.String()))
+	}
+}
+
+func dbFunc(db *sqlx.DB) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if _, err := db.Exec("CREATE TABLE IF NOT EXISTS ticks (tick timestamp)"); err != nil {
+			http.Error(w, fmt.Sprintf("Error creating database table: %q", err), http.StatusInternalServerError)
+			return
+		}
+
+		if _, err := db.Exec("INSERT INTO ticks VALUES (now())"); err != nil {
+			http.Error(w, fmt.Sprintf("Error incrementing tick: %q", err), http.StatusInternalServerError)
+			return
+		}
+
+		rows, err := db.Query("SELECT tick FROM ticks")
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Error reading ticks: %q", err), http.StatusInternalServerError)
+			return
+		}
+
+		defer rows.Close()
+		for rows.Next() {
+			var tick time.Time
+			if err := rows.Scan(&tick); err != nil {
+				http.Error(w, fmt.Sprintf("Error scanning ticks: %q", err), http.StatusInternalServerError)
+				return
+			}
+			w.Write([]byte(fmt.Sprintf("Read from DB: %s\n", tick.String())))
+		}
+	}
+}
+
 func main() {
 
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		log.Fatal("$PORT must be set")
+	}
+
+	var err error
+	tStr := os.Getenv("REPEAT")
+	repeat, err = strconv.Atoi(tStr)
+	if err != nil {
+		log.Print("Error converting $REPEAT to an int: %q - Using default", err)
+		repeat = 5
+	}
+
 	conn, _ := connectSQL()
+
+	http.HandleFunc("/db", dbFunc(conn))
+	http.HandleFunc("/repeat", dbFunc(conn))
 	http.HandleFunc("/", mainHandler(conn))
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":"+port, nil)
 }
 
 func connectSQL() (*sqlx.DB, error) {
-	conn, err := sqlx.Connect("mysql", "root:12345@tcp(mysql:3306)/chat?charset=utf8")
+	conn, err := sqlx.Connect("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		panic(err)
 	}
