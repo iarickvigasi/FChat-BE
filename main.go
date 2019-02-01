@@ -190,7 +190,7 @@ func getHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, room string
 func mainHandler(db *sqlx.DB) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		action, room := parseURL(w, r.URL.Path)
-		err := checkAndCreateRoom(db, room)
+		err := checkAndCreateRoom(db, room, w)
 		if err != nil {
 			checkHTTPError(w, err)
 			return
@@ -208,18 +208,11 @@ func mainHandler(db *sqlx.DB) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func checkCount(rows *sql.Rows) (count int) {
+func checkCount(rows *sql.Rows) (count int, err error) {
 	for rows.Next() {
-		err := rows.Scan(&count)
-		checkErr(err)
+		err = rows.Scan(&count)
 	}
-	return count
-}
-
-func checkErr(err error) {
-	if err != nil {
-		panic(err)
-	}
+	return count, err
 }
 
 func checkHTTPError(w http.ResponseWriter, err error) {
@@ -248,7 +241,7 @@ func parseURL(w http.ResponseWriter, url string) (action string, room string) {
 	return action, room
 }
 
-func checkAndCreateRoom(db *sqlx.DB, room string) (err error) {
+func checkAndCreateRoom(db *sqlx.DB, room string, w http.ResponseWriter) (err error) {
 	// Check if such table with messages exists
 	// If not create
 	var check = fmt.Sprintf(`
@@ -258,7 +251,11 @@ func checkAndCreateRoom(db *sqlx.DB, room string) (err error) {
 	`, room)
 
 	rows, err := db.Query(check)
-	count := checkCount(rows)
+	count, errDb := checkCount(rows)
+
+	if errDb != nil {
+		checkHTTPError(w, err)
+	}
 
 	if err != nil || count == 0 {
 		_, err := db.Exec(fmt.Sprintf(`
