@@ -91,9 +91,9 @@ func main() {
 
 	conn, _ := connectSQL()
 
+	http.HandleFunc("/", mainHandler(conn))
 	http.HandleFunc("/db", dbFunc(conn))
 	http.HandleFunc("/repeat", dbFunc(conn))
-	http.HandleFunc("/", mainHandler(conn))
 	http.ListenAndServe(":"+port, nil)
 }
 
