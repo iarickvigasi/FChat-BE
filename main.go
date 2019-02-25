@@ -73,6 +73,10 @@ func dbFunc(db *sqlx.DB) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
+
 func main() {
 
 	port := os.Getenv("PORT")
@@ -189,6 +193,8 @@ func getHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, room string
 
 func mainHandler(db *sqlx.DB) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
+
 		action, room := parseURL(w, r.URL.Path)
 		err := checkAndCreateRoom(db, room, w)
 		if err != nil {
