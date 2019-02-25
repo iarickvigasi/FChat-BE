@@ -163,14 +163,19 @@ func sendHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, room strin
 func getHandler(w http.ResponseWriter, r *http.Request, db *sqlx.DB, room string) {
 	// Check if request contains offset and lenght
 	// Write message
-
-	decoder := json.NewDecoder(r.Body)
-	var body GetRequest
-	err := decoder.Decode(&body)
+	var Offset, err = strconv.Atoi(r.URL.Query().Get("offset"))
 	if err != nil {
 		checkHTTPError(w, err)
 		return
 	}
+
+	var Limit, errLimitConv = strconv.Atoi(r.URL.Query().Get("limit"))
+	if errLimitConv != nil {
+		checkHTTPError(w, err)
+		return
+	}
+
+	var body = GetRequest{Offset, Limit}
 
 	if body.Limit <= 0 || body.Offset < 0 {
 		checkHTTPError(w, incorectBodyGetRequest())
